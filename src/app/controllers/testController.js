@@ -1,9 +1,10 @@
 const Course = require('../models/Course');
 class testController {
     async index(req, res, next) {
-        const course = await Course.find({})
+        const course = await Course.find({});
         res.json(course);
     }
+    async;
     async createTest(req, res, next) {
         const course = new Course({
             name: req.body.name,

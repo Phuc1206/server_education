@@ -8,11 +8,10 @@ const db = require('./config/db');
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-app.use(cors())
+app.use(cors());
 
 route(app);
 db.connect();
-
 
 app.listen(PORT, () => {
     console.log(`Server running at port ${PORT}`);

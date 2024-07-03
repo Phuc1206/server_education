@@ -1,5 +1,7 @@
-const camRouter = require('./cam');
+const homeRouter = require('./home');
+const usersRouter = require('./users');
 function route(app) {
-    app.use('/', camRouter);
+    app.use('/', homeRouter);
+    app.use('/auth', usersRouter);
 }
 module.exports = route;
