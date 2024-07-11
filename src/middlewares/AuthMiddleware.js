@@ -1,12 +1,13 @@
 const { verify } = require("jsonwebtoken");
 
 const validateToken = (req, res, next) => {
-  const assessToken = req.headers("assessToken");
+  const assessToken = req.header("accessToken");
   if (!assessToken) {
     return res.json({ error: "Token not provided" });
   }
   try {
     const validToken = verify(assessToken, "importantsecret");
+    req.user = validToken;
     if (validToken) {
       return next();
     }

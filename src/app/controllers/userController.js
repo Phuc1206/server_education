@@ -1,6 +1,7 @@
 const User = require("../models/User");
 const bcrypt = require("bcrypt");
 const { sign } = require("jsonwebtoken");
+
 class userController {
   async register(req, res, next) {
     try {
@@ -31,7 +32,7 @@ class userController {
         .then((match) => {
           if (!match) return res.json({ error: "Invalid credentials" });
           const accessToken = sign(
-            { username: user.username, id: user.id },
+            { username: user.username, id: user.id, is_admin: user.is_admin },
             "importantsecret"
           );
           res.json({ message: "Logged in successfully", user, accessToken });
@@ -40,6 +41,9 @@ class userController {
     } catch (error) {
       next(error);
     }
+  }
+  getUser(req, res) {
+    res.json(req.user);
   }
 }
 
