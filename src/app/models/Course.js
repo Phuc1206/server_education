@@ -5,18 +5,18 @@ const Schema = mongoose.Schema;
 
 const Course = new Schema(
   {
-    title: { type: String, unique: true },
+    title: { type: String, required: true },
     description: { type: String, required: true },
     image: { type: String, required: true },
     level: { type: String },
-    students_count: { type: Number },
-    slug: { type: String, slug: "name", unique: true },
+    students_count: [{ type: Schema.Types.ObjectId, ref: "User", default: [] }],
+    slug: { type: String, slug: "title", unique: true },
     duration: { type: String, required: true },
-    is_logged: { type: Boolean, required: true },
+    // is_logged: { type: Boolean, default: true },
     tracks: [
       {
         type: Schema.Types.ObjectId,
-        ref: "track",
+        ref: "Track",
       },
     ],
   },
@@ -24,5 +24,5 @@ const Course = new Schema(
     timestamps: true,
   }
 );
-// mongoose.plugin(slug);
+mongoose.plugin(slug);
 module.exports = mongoose.model("Course", Course);
