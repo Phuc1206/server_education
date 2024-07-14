@@ -8,6 +8,8 @@ router.delete("/course/remove/:id", adminController.removeCourse);
 router.put("/course/update/:id", adminController.updateCourse);
 // Track routes
 router.post("/course/track/create", adminController.addTracksToCourse);
+router.put("/course/track/update/:id", adminController.updateTracks);
+router.delete("/course/track/step/delete/:id", adminController.deleteStep);
 // User routes
 router.get("/user/", adminController.showUser);
 router.get("/user/blocked", adminController.showUserBlocked);

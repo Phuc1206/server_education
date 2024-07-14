@@ -95,7 +95,82 @@ class adminController {
       });
     }
   }
+  async updateTracks(req, res) {
+    console.log(req.body.track_steps);
+    try {
+      const trackId = req.params.id;
+      const { title, duration, position, track_steps } = req.body;
 
+      // Cập nhật thông tin chính của Track
+      const updatedTrack = await Track.findByIdAndUpdate(
+        trackId,
+        {
+          title,
+          duration,
+          position,
+        },
+        { new: true }
+      );
+
+      if (!updatedTrack) {
+        return res.status(404).json({ message: "Track not found" });
+      }
+
+      // Cập nhật từng track_step trong track_steps
+      const updatedTrackSteps = await Promise.all(
+        track_steps.map(async (step) => {
+          const updatedStep = await TrackStep.findByIdAndUpdate(
+            step._id,
+            {
+              lesson: {
+                question: step.lesson.question,
+                answer: step.lesson.answer,
+                option_a: step.lesson.option_a,
+                option_b: step.lesson.option_b,
+                option_c: step.lesson.option_c,
+                option_d: step.lesson.option_d,
+                explanation: step.lesson.explanation,
+              },
+              video: {
+                title: step.video.title,
+                url: step.video.url,
+                image_url: step.video.image_url,
+                duration: step.video.duration,
+              },
+            },
+            { new: true }
+          );
+
+          return updatedStep;
+        })
+      );
+
+      // Trả về kết quả cập nhật của Track và các TrackStep đã được cập nhật
+      res.status(200).json({ updatedTrack, updatedTrackSteps });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({
+        message: "An error occurred while updating the track",
+        error: err.message,
+      });
+    }
+  }
+  async deleteStep(req, res) {
+    const stepId = req.params.id;
+    console.log(stepId);
+    try {
+      // Logic to delete step from database
+      await Step.findByIdAndDelete(stepId);
+
+      res.status(200).json({ message: "Step deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting step:", error);
+      res.status(500).json({
+        message: "An error occurred while deleting step",
+        error: error.message,
+      });
+    }
+  }
   // user controller
   async showUser(req, res) {
     const user = await User.find({});
@@ -191,4 +266,5 @@ class adminController {
     }
   }
 }
+
 module.exports = new adminController();
