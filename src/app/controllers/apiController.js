@@ -7,9 +7,9 @@ class apiController {
   async courseSearch(req, res, next) {
     try {
       const searchQuery = req.query.q;
-      console.log("Received search query:", searchQuery);
+      const regex = new RegExp(`^${searchQuery}`, "i"); // 'i' option for case-insensitive
       const courses = await Course.find({
-        $text: { $search: searchQuery },
+        $or: [{ title: { $regex: regex } }],
       });
       res.json(courses);
     } catch (err) {

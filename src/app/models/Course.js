@@ -24,5 +24,6 @@ const Course = new Schema(
     timestamps: true,
   }
 );
+Course.index({ title: "text" });
 mongoose.plugin(slug);
 module.exports = mongoose.model("Course", Course);

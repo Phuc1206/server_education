@@ -155,12 +155,11 @@ class adminController {
       });
     }
   }
-  async deleteStep(req, res) {
+  async removeStep(req, res) {
     const stepId = req.params.id;
     console.log(stepId);
     try {
-      // Logic to delete step from database
-      await Step.findByIdAndDelete(stepId);
+      await TrackStep.findByIdAndDelete(stepId);
 
       res.status(200).json({ message: "Step deleted successfully" });
     } catch (error) {
@@ -171,6 +170,24 @@ class adminController {
       });
     }
   }
+  async removeTrack(req, res) {
+    const trackId = req.params.id;
+    try {
+      const deletedTrack = await Track.findByIdAndDelete(trackId);
+      if (!deletedTrack) {
+        return res.status(404).json({ message: "Track not found" });
+      }
+      await TrackStep.deleteMany({ _id: { $in: deletedTrack.track_steps } });
+      res.status(200).json({ message: "Track deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting track:", error);
+      res.status(500).json({
+        message: "An error occurred while deleting track",
+        error: error.message,
+      });
+    }
+  }
+
   // user controller
   async showUser(req, res) {
     const user = await User.find({});
