@@ -1,6 +1,5 @@
 const mongoose = require("mongoose");
 const slug = require("mongoose-slug-updater");
-
 const Schema = mongoose.Schema;
 
 const Course = new Schema(
@@ -26,4 +25,5 @@ const Course = new Schema(
 );
 Course.index({ title: "text" });
 mongoose.plugin(slug);
+
 module.exports = mongoose.model("Course", Course);

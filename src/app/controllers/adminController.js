@@ -2,6 +2,8 @@ const Course = require("../models/Course");
 const User = require("../models/User");
 const Track = require("../models/Track");
 const TrackStep = require("../models/TrackStep");
+
+const getYouTubeVideoDuration = require("../utils/apiYoutube");
 class adminController {
   // course controller
   async createCourse(req, res) {
@@ -45,7 +47,15 @@ class adminController {
       const savedTrack = await newTrack.save();
 
       const trackStepsPromises = trackData.track_steps.map(async (stepData) => {
-        console.log(stepData);
+        let videoDuration = stepData.video.duration;
+
+        if (stepData.video.url && !videoDuration) {
+          try {
+            videoDuration = await getYouTubeVideoDuration(stepData.video.url);
+          } catch (err) {
+            console.error("Error fetching video duration:", err);
+          }
+        }
         const newTrackStep = new TrackStep({
           position: stepData.position,
           lesson: {
@@ -60,6 +70,7 @@ class adminController {
           video: {
             url: stepData.video.url,
             title: stepData.video.title,
+            duration: videoDuration,
           },
         });
 
@@ -82,7 +93,6 @@ class adminController {
         await course.save();
       }
 
-      // Step 7: Respond with success message and details
       res.status(200).json({
         message: "Tracks added to course successfully",
         track: savedTrack,
