@@ -10,7 +10,7 @@ const User = new Schema(
     password: { type: String, required: true },
     is_admin: { type: Boolean, default: false },
     avatar: { type: String },
-    course_id: [{ type: Schema.Types.ObjectId, ref: "course" }],
+    course_id: [{ type: Schema.Types.ObjectId, ref: "Course" }],
   },
   {
     timestamps: true,

@@ -1,9 +1,43 @@
 const Course = require("../models/Course");
 const User = require("../models/User");
+const Progress = require("../models/Progress");
+const { upload } = require("../../middlewares/UploadImgMiddleware");
 class apiController {
   async home(req, res, next) {
     const course = await Course.find({});
     res.json(course);
+  }
+  async profile(req, res, next) {
+    const userId = req.params.id;
+    try {
+      const user = await User.findById(userId)
+        .populate({
+          path: "course_id",
+          populate: { path: "tracks", populate: { path: "track_steps" } },
+        })
+        .exec();
+      res.json(user);
+    } catch (err) {
+      next(err);
+    }
+  }
+  async uploadAvatar(req, res, next) {
+    upload(req, res, async function (err) {
+      if (err) {
+        return res.status(400).json({ message: err });
+      }
+      try {
+        const userId = req.params.id;
+        console.log(req.file);
+        const avatarPath = req.file.filename;
+        const user = await User.findByIdAndUpdate(userId, {
+          avatar: avatarPath,
+        });
+        res.status(200).json({ message: "Avatar uploaded successfully", user });
+      } catch (err) {
+        next(err);
+      }
+    });
   }
   async courseSearch(req, res, next) {
     try {
@@ -61,6 +95,64 @@ class apiController {
         message: "An error occurred while enrolling in the course",
         error: err.message,
       });
+    }
+  }
+  async saveProgress(req, res, next) {
+    const { userId, courseId, trackId, trackStepId, progress } = req.body;
+    try {
+      let progressRecord = await Progress.findOne({
+        user: userId,
+        course: courseId,
+      });
+
+      if (progressRecord) {
+        progressRecord.track = trackId;
+        progressRecord.trackStep = trackStepId;
+        progressRecord.progress = progress;
+      } else {
+        progressRecord = new Progress({
+          user: userId,
+          course: courseId,
+          track: trackId,
+          trackStep: trackStepId,
+          progress,
+        });
+      }
+
+      await progressRecord.save();
+      res.status(200).json({ message: "Progress saved successfully" });
+    } catch (error) {
+      res.status(500).json({ message: "Error saving progress", error });
+    }
+  }
+  async getProgress(req, res, next) {
+    const { userId, courseId } = req.params;
+    try {
+      const progressRecord = await Progress.findOne({
+        user: userId,
+        course: courseId,
+      })
+        .populate("track")
+        .populate("trackStep");
+      if (progressRecord) {
+        res.json(progressRecord);
+      } else {
+        res.status(404).json({ message: "Progress not found" });
+      }
+    } catch (error) {
+      res.status(500).json({ message: "Error getting progress", error });
+    }
+  }
+  async getProgressUser(req, res, next) {
+    const { userId } = req.params;
+    try {
+      const progressRecords = await Progress.find({ user: userId })
+        .populate("course")
+        .populate("track")
+        .populate("trackStep");
+      res.json(progressRecords);
+    } catch (error) {
+      res.status(500).json({ message: "Error getting progress", error });
     }
   }
 }

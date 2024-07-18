@@ -1,10 +1,11 @@
-const express = require('express');
+const express = require("express");
+const path = require("path");
 const app = express();
-const cors = require('cors');
+const cors = require("cors");
 const PORT = 3001;
-
-const route = require('./routes');
-const db = require('./config/db');
+app.use(express.static("public"));
+const route = require("./routes");
+const db = require("./config/db");
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
@@ -14,5 +15,5 @@ route(app);
 db.connect();
 
 app.listen(PORT, () => {
-    console.log(`Server running at port ${PORT}`);
+  console.log(`Server running at port ${PORT}`);
 });
