@@ -1,7 +1,9 @@
 const Course = require("../models/Course");
 const User = require("../models/User");
 const Progress = require("../models/Progress");
-const { upload } = require("../../middlewares/UploadImgMiddleware");
+
+const path = require("path");
+const { upload, deleteFile } = require("../../middlewares/UploadImgMiddleware");
 class apiController {
   async home(req, res, next) {
     const course = await Course.find({});
@@ -21,6 +23,7 @@ class apiController {
       next(err);
     }
   }
+
   async uploadAvatar(req, res, next) {
     upload(req, res, async function (err) {
       if (err) {
@@ -28,11 +31,27 @@ class apiController {
       }
       try {
         const userId = req.params.id;
-        console.log(req.file);
-        const avatarPath = req.file.filename;
-        const user = await User.findByIdAndUpdate(userId, {
-          avatar: avatarPath,
-        });
+        const newAvatarPath = req.file.filename;
+
+        // Fetch the current user to get the old avatar path
+        const user = await User.findById(userId);
+        if (!user) {
+          return res.status(404).json({ message: "User not found" });
+        }
+
+        const oldAvatarPath = user.avatar
+          ? path.join("public/img/", user.avatar)
+          : null;
+
+        // Update the user's avatar path
+        user.avatar = newAvatarPath;
+        await user.save();
+
+        // Delete the old avatar file if it exists
+        if (oldAvatarPath) {
+          deleteFile(oldAvatarPath);
+        }
+
         res.status(200).json({ message: "Avatar uploaded successfully", user });
       } catch (err) {
         next(err);
@@ -137,7 +156,7 @@ class apiController {
       if (progressRecord) {
         res.json(progressRecord);
       } else {
-        res.status(404).json({ message: "Progress not found" });
+        res.json({ message: "Progress not found" });
       }
     } catch (error) {
       res.status(500).json({ message: "Error getting progress", error });
@@ -150,7 +169,8 @@ class apiController {
         .populate("course")
         .populate("track")
         .populate("trackStep");
-      res.json(progressRecords);
+      const user = await User.findById(userId);
+      res.json({ progressRecords, user });
     } catch (error) {
       res.status(500).json({ message: "Error getting progress", error });
     }

@@ -1,6 +1,6 @@
 const multer = require("multer");
 const path = require("path");
-
+const fs = require("fs");
 // Define storage for the uploaded files
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -12,7 +12,13 @@ const storage = multer.diskStorage({
     cb(null, uniqueSuffix + ext);
   },
 });
-
+async function deleteFile(filePath) {
+  try {
+    fs.unlinkSync(filePath);
+  } catch (err) {
+    console.error(`Error deleting file ${filePath}:`, err);
+  }
+}
 // Set up multer with storage, limits, and file filter
 const upload = multer({
   storage: storage,
@@ -31,4 +37,4 @@ const upload = multer({
     cb(new Error("Error: Only images are allowed!"));
   },
 }).single("avatar"); // Field name in the form is 'avatar'
-module.exports = { upload };
+module.exports = { upload, deleteFile };

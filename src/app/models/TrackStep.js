@@ -5,19 +5,19 @@ const TrackStep = new Schema(
   {
     position: { type: Number, required: true },
     lesson: {
-      question: { type: String },
-      answer: { type: String },
-      option_a: { type: String },
-      option_b: { type: String },
-      option_c: { type: String },
-      option_d: { type: String },
-      explanation: { type: String },
+      question: { type: String, default: "" },
+      answer: { type: String, default: "" },
+      option_a: { type: String, default: "" },
+      option_b: { type: String, default: "" },
+      option_c: { type: String, default: "" },
+      option_d: { type: String, default: "" },
+      explanation: { type: String, default: "" },
     },
     video: {
       title: { type: String, required: true },
       url: { type: String, required: true },
-      image_url: { type: String },
-      duration: { type: Number },
+      image_url: { type: String, default: "" },
+      duration: { type: Number, default: "" },
     },
   },
   {
