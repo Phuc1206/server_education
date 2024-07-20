@@ -125,15 +125,25 @@ class apiController {
       });
 
       if (progressRecord) {
-        progressRecord.track = trackId;
-        progressRecord.trackStep = trackStepId;
+        const trackIndex = progressRecord.track.findIndex((track) =>
+          track.equals(trackId)
+        );
+        const trackStepIndex = progressRecord.trackStep.findIndex((step) =>
+          step.equals(trackStepId)
+        );
+        if (trackIndex === -1) {
+          progressRecord.track.push(trackId);
+        }
+        if (trackStepIndex === -1) {
+          progressRecord.trackStep.push(trackStepId);
+        }
         progressRecord.progress = progress;
       } else {
         progressRecord = new Progress({
           user: userId,
           course: courseId,
-          track: trackId,
-          trackStep: trackStepId,
+          track: [trackId],
+          trackStep: [trackStepId],
           progress,
         });
       }
@@ -141,6 +151,7 @@ class apiController {
       await progressRecord.save();
       res.status(200).json({ message: "Progress saved successfully" });
     } catch (error) {
+      console.error("Error saving progress:", error);
       res.status(500).json({ message: "Error saving progress", error });
     }
   }
@@ -153,24 +164,12 @@ class apiController {
       })
         .populate("track")
         .populate("trackStep");
+      const user = await User.findById(userId);
       if (progressRecord) {
-        res.json(progressRecord);
+        res.json({ progressRecord, user });
       } else {
         res.json({ message: "Progress not found" });
       }
-    } catch (error) {
-      res.status(500).json({ message: "Error getting progress", error });
-    }
-  }
-  async getProgressUser(req, res, next) {
-    const { userId } = req.params;
-    try {
-      const progressRecords = await Progress.find({ user: userId })
-        .populate("course")
-        .populate("track")
-        .populate("trackStep");
-      const user = await User.findById(userId);
-      res.json({ progressRecords, user });
     } catch (error) {
       res.status(500).json({ message: "Error getting progress", error });
     }
