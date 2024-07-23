@@ -200,7 +200,7 @@ class adminController {
 
   // user controller
   async showUser(req, res) {
-    const user = await User.find({});
+    const user = await User.find({}).populate("course_id");
     return res.json(user);
   }
   async updateUser(req, res) {
@@ -227,6 +227,47 @@ class adminController {
       return res
         .status(500)
         .json({ message: "An error occurred while updating the user" });
+    }
+  }
+  async removeUserFromCourse(req, res) {
+    const { userId, courseId } = req.params;
+
+    try {
+      // Remove course from user
+      const userUpdateResult = await User.updateOne(
+        { _id: userId },
+        { $pull: { course_id: courseId } }
+      );
+
+      if (userUpdateResult.modifiedCount === 1) {
+        // Remove user from course students list
+        const courseUpdateResult = await Course.updateOne(
+          { _id: courseId },
+          { $pull: { students_count: userId } }
+        );
+
+        if (courseUpdateResult.modifiedCount === 1) {
+          res.status(200).send({
+            message:
+              "Course removed from user and user removed from course successfully.",
+          });
+        } else {
+          // Rollback: add course back to user if course update fails
+          await User.updateOne(
+            { _id: userId },
+            { $push: { course_id: courseId } }
+          );
+          res.status(404).send({
+            message:
+              "User removal from course failed. User update rolled back.",
+          });
+        }
+      } else {
+        res.status(404).send({ message: "User or Course not found." });
+      }
+    } catch (error) {
+      console.error("Error removing course from user:", error);
+      res.status(500).send({ message: "Internal server error." });
     }
   }
   async blockUser(req, res) {

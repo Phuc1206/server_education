@@ -16,6 +16,7 @@ const Course = new Schema(
       {
         type: Schema.Types.ObjectId,
         ref: "Track",
+        required: true,
       },
     ],
   },

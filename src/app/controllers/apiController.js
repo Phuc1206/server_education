@@ -174,5 +174,18 @@ class apiController {
       res.status(500).json({ message: "Error getting progress", error });
     }
   }
+  async getProgressUser(req, res, next) {
+    const { userId } = req.params;
+    try {
+      const progressRecords = await Progress.find({ user: userId })
+        .populate("user")
+        .populate("course")
+        .populate("track")
+        .populate("trackStep");
+      res.json(progressRecords);
+    } catch (error) {
+      res.status(500).json({ message: "Error getting progress", error });
+    }
+  }
 }
 module.exports = new apiController();

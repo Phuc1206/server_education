@@ -6,42 +6,64 @@ class userController {
   async register(req, res, next) {
     try {
       const { username, fullname, email, password } = req.body;
-      bcrypt.hash(password, 10).then((hash) => {
-        const user = new User({
-          username,
-          fullname,
-          email,
-          password: hash,
-        });
-        user
-          .save()
-          .then(() => res.json({ message: "Register successful", user }))
-          .catch(next);
+      const existingUser = await User.findOne({
+        $or: [{ username }, { email }],
       });
+      if (existingUser) {
+        return res
+          .status(400)
+          .json({ error: "Username or email already exists" });
+      }
+      const hash = await bcrypt.hash(password, 10);
+
+      const user = new User({
+        username,
+        fullname,
+        email,
+        password: hash,
+      });
+
+      await user.save();
+
+      res.status(201).json({ message: "Register successful", user });
     } catch (error) {
-      next(error);
+      return res.status(500).json({ error: "Internal server error" });
     }
   }
+
   async login(req, res, next) {
     try {
       const { username, password } = req.body;
+
+      // Find the user by username
       const user = await User.findOne({ username });
-      if (!user) return res.json({ error: "User not found" });
-      bcrypt
-        .compare(password, user.password)
-        .then((match) => {
-          if (!match) return res.json({ error: "Invalid credentials" });
-          const accessToken = sign(
-            { username: user.username, id: user.id, is_admin: user.is_admin },
-            "importantsecret"
-          );
-          res.json({ message: "Logged in successfully", user, accessToken });
-        })
-        .catch(next);
+
+      // Check if user exists
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      // Compare provided password with stored hashed password
+      const match = await bcrypt.compare(password, user.password);
+      if (!match) {
+        return res.status(401).json({ error: "Invalid credentials" });
+      }
+
+      // Generate JWT token
+      const accessToken = sign(
+        { username: user.username, id: user.id, is_admin: user.is_admin },
+        "importantsecret"
+      );
+
+      // Respond with success message, user info, and access token
+      res
+        .status(200)
+        .json({ message: "Logged in successfully", user, accessToken });
     } catch (error) {
       next(error);
     }
   }
+
   getUser(req, res) {
     res.json(req.user);
   }

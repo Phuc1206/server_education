@@ -14,6 +14,10 @@ router.delete("/course/track/delete/:id", adminController.removeTrack);
 // User routes
 router.get("/user/", adminController.showUser);
 router.get("/user/blocked", adminController.showUserBlocked);
+router.delete(
+  "/user/remove/:userId/:courseId",
+  adminController.removeUserFromCourse
+);
 router.put("/user/:id", adminController.updateUser);
 router.delete("/user/block/:id", adminController.blockUser);
 router.delete("/user/destroy/:id", adminController.destroyUser);

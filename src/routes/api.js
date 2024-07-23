@@ -9,4 +9,5 @@ router.get("/course/:slug", apiController.showCourse);
 router.post("/course/enroll/:courseId", apiController.enrollCourse);
 router.post("/save-progress", apiController.saveProgress);
 router.get("/get-progress/:userId/:courseId", apiController.getProgress);
+router.get("/get-progress-user/:userId", apiController.getProgressUser);
 module.exports = router;
