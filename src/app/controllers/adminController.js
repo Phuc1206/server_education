@@ -2,35 +2,70 @@ const Course = require("../models/Course");
 const User = require("../models/User");
 const Track = require("../models/Track");
 const TrackStep = require("../models/TrackStep");
-
 const getYouTubeVideoDuration = require("../utils/apiYoutube");
 class adminController {
   // course controller
   async createCourse(req, res) {
-    const { title, description, image, level, duration } = req.body;
-    const course = await Course.create({
-      title,
-      description,
-      image,
-      level,
-      duration,
-    });
-    return res.json(course);
+    try {
+      const { title, description, image, level, duration } = req.body;
+      const course = await Course.create({
+        title,
+        description,
+        image,
+        level,
+        duration,
+      });
+      return res.json(course);
+    } catch (err) {
+      res.status(500).json({
+        message: "An error occurred while creating the course",
+        error: err.message,
+      });
+    }
   }
   async showCourse(req, res) {
-    const courses = await Course.find({}).populate({
-      path: "tracks",
-      populate: { path: "track_steps" },
-    });
-    return res.json(courses);
+    try {
+      const courses = await Course.find({}).populate({
+        path: "tracks",
+        populate: { path: "track_steps" },
+      });
+      return res.json(courses);
+    } catch (err) {
+      res.status(500).json({
+        message: "An error occurred while fetching courses",
+        error: err.message,
+      });
+    }
   }
   async removeCourse(req, res) {
-    const courses = await Course.findByIdAndDelete({ _id: req.params.id });
-    return res.json(courses);
+    try {
+      const course = await Course.findByIdAndDelete(req.params.id);
+      if (!course) {
+        return res.status(404).json({ message: "Course not found" });
+      }
+      return res.json(course);
+    } catch (err) {
+      res.status(500).json({
+        message: "An error occurred while deleting the course",
+        error: err.message,
+      });
+    }
   }
   async updateCourse(req, res) {
-    const course = await Course.updateOne({ _id: req.params.id }, req.body);
-    return res.json(course);
+    try {
+      const course = await Course.updateOne({ _id: req.params.id }, req.body);
+      if (!course.nModified) {
+        return res
+          .status(404)
+          .json({ message: "Course not found or no changes made" });
+      }
+      return res.json(course);
+    } catch (err) {
+      res.status(500).json({
+        message: "An error occurred while updating the course",
+        error: err.message,
+      });
+    }
   }
   //track controller
   async addTracksToCourse(req, res) {
@@ -105,13 +140,12 @@ class adminController {
       });
     }
   }
+
   async updateTracks(req, res) {
-    console.log(req.body.track_steps);
     try {
       const trackId = req.params.id;
       const { title, duration, position, track_steps } = req.body;
 
-      // Cập nhật thông tin chính của Track
       const updatedTrack = await Track.findByIdAndUpdate(
         trackId,
         {
@@ -155,7 +189,6 @@ class adminController {
         })
       );
 
-      // Trả về kết quả cập nhật của Track và các TrackStep đã được cập nhật
       res.status(200).json({ updatedTrack, updatedTrackSteps });
     } catch (err) {
       console.error(err);
@@ -200,8 +233,16 @@ class adminController {
 
   // user controller
   async showUser(req, res) {
-    const user = await User.find({}).populate("course_id");
-    return res.json(user);
+    try {
+      const users = await User.find({}).populate("course_id");
+      return res.json(users);
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({
+        message: "An error occurred while fetching users",
+        error: err.message,
+      });
+    }
   }
   async updateUser(req, res) {
     try {
@@ -233,14 +274,12 @@ class adminController {
     const { userId, courseId } = req.params;
 
     try {
-      // Remove course from user
       const userUpdateResult = await User.updateOne(
         { _id: userId },
         { $pull: { course_id: courseId } }
       );
 
       if (userUpdateResult.modifiedCount === 1) {
-        // Remove user from course students list
         const courseUpdateResult = await Course.updateOne(
           { _id: courseId },
           { $pull: { students_count: userId } }
@@ -252,7 +291,6 @@ class adminController {
               "Course removed from user and user removed from course successfully.",
           });
         } else {
-          // Rollback: add course back to user if course update fails
           await User.updateOne(
             { _id: userId },
             { $push: { course_id: courseId } }
@@ -276,7 +314,7 @@ class adminController {
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
-      return res.json(user);
+      return res.json({ message: "Block user successfully", user });
     } catch (error) {
       console.error("Error blocking user:", error);
       return res
@@ -290,7 +328,7 @@ class adminController {
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
-      return res.json(user);
+      return res.json({ message: "Unblock user successfully", user });
     } catch (error) {
       console.error("Error unblocking user:", error);
       return res

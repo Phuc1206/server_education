@@ -36,7 +36,11 @@ class userController {
       const { username, password } = req.body;
 
       // Find the user by username
-      const user = await User.findOne({ username });
+      const user = await User.findOneWithDeleted({ username });
+
+      if (user && user.deleted) {
+        return res.status(403).json({ error: "User is blocked" });
+      }
 
       // Check if user exists
       if (!user) {

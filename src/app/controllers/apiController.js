@@ -6,8 +6,15 @@ const path = require("path");
 const { upload, deleteFile } = require("../../middlewares/UploadImgMiddleware");
 class apiController {
   async home(req, res, next) {
-    const course = await Course.find({});
-    res.json(course);
+    try {
+      const course = await Course.find({});
+      res.json(course);
+    } catch (err) {
+      res
+        .status(500)
+        .json({ message: "Error fetching courses", error: err.message });
+      next(err);
+    }
   }
   async profile(req, res, next) {
     const userId = req.params.id;
@@ -18,8 +25,14 @@ class apiController {
           populate: { path: "tracks", populate: { path: "track_steps" } },
         })
         .exec();
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
       res.json(user);
     } catch (err) {
+      res
+        .status(500)
+        .json({ message: "Error fetching profile", error: err.message });
       next(err);
     }
   }
@@ -33,7 +46,6 @@ class apiController {
         const userId = req.params.id;
         const newAvatarPath = req.file.filename;
 
-        // Fetch the current user to get the old avatar path
         const user = await User.findById(userId);
         if (!user) {
           return res.status(404).json({ message: "User not found" });
@@ -43,17 +55,18 @@ class apiController {
           ? path.join("public/img/", user.avatar)
           : null;
 
-        // Update the user's avatar path
         user.avatar = newAvatarPath;
         await user.save();
 
-        // Delete the old avatar file if it exists
         if (oldAvatarPath) {
           deleteFile(oldAvatarPath);
         }
 
         res.status(200).json({ message: "Avatar uploaded successfully", user });
       } catch (err) {
+        res
+          .status(500)
+          .json({ message: "Error uploading avatar", error: err.message });
         next(err);
       }
     });
@@ -67,6 +80,7 @@ class apiController {
       });
       res.json(courses);
     } catch (err) {
+      res.status(500).json({ message: err.message });
       next(err);
     }
   }
@@ -77,8 +91,14 @@ class apiController {
         path: "tracks",
         populate: { path: "track_steps" },
       });
+      if (!course) {
+        return res.status(404).json({ message: "Course not found" });
+      }
       res.json(course);
     } catch (err) {
+      res
+        .status(500)
+        .json({ message: "Failed to fetch course data", error: err.message });
       next(err);
     }
   }
@@ -86,7 +106,7 @@ class apiController {
     try {
       const { courseId } = req.params;
       const { userId } = req.body;
-      const user = await User.findById(userId); // Find the user in the database
+      const user = await User.findById(userId);
 
       if (!user) {
         return res.status(404).json({ message: "User not found" });
@@ -114,6 +134,7 @@ class apiController {
         message: "An error occurred while enrolling in the course",
         error: err.message,
       });
+      next(err);
     }
   }
   async saveProgress(req, res, next) {
@@ -153,6 +174,7 @@ class apiController {
     } catch (error) {
       console.error("Error saving progress:", error);
       res.status(500).json({ message: "Error saving progress", error });
+      next(error);
     }
   }
   async getProgress(req, res, next) {
@@ -172,6 +194,7 @@ class apiController {
       }
     } catch (error) {
       res.status(500).json({ message: "Error getting progress", error });
+      next(error);
     }
   }
   async getProgressUser(req, res, next) {
@@ -182,9 +205,13 @@ class apiController {
         .populate("course")
         .populate("track")
         .populate("trackStep");
+      if (progressRecords.length === 0) {
+        return res.status(404).json({ message: "No progress records found" });
+      }
       res.json(progressRecords);
     } catch (error) {
       res.status(500).json({ message: "Error getting progress", error });
+      next(error);
     }
   }
 }
