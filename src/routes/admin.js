@@ -22,4 +22,6 @@ router.put("/user/:id", adminController.updateUser);
 router.delete("/user/block/:id", adminController.blockUser);
 router.delete("/user/destroy/:id", adminController.destroyUser);
 router.patch("/user/unblock/:id", adminController.unBlockUser);
+// model routes
+router.post("/model/save", adminController.saveModel);
 module.exports = router;

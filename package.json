@@ -12,6 +12,9 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@tensorflow-models/knn-classifier": "^1.2.6",
+    "@tensorflow-models/mobilenet": "^2.1.1",
+    "@tensorflow/tfjs-node": "^4.20.0",
     "bcrypt": "^5.1.1",
     "cors": "^2.8.5",
     "express": "^4.19.2",

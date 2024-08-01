@@ -1,0 +1,9 @@
+{
+  "watch": ["src", "config"],
+  "ignore": ["public/model", "node_modules"],
+  "ext": "js,json,css,html",
+  "exec": "node src/index.js",
+  "delay": "1000",
+  "verbose": true,
+  "legacyWatch": true
+}

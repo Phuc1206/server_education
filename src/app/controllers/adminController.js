@@ -3,6 +3,9 @@ const User = require("../models/User");
 const Track = require("../models/Track");
 const TrackStep = require("../models/TrackStep");
 const getYouTubeVideoDuration = require("../utils/apiYoutube");
+const { saveModel } = require("../../middlewares/SaveModelMiddleware");
+const path = require("path");
+const fs = require("fs");
 class adminController {
   // course controller
   async createCourse(req, res) {
@@ -370,6 +373,33 @@ class adminController {
         .status(500)
         .json({ message: "An error occurred while deleting the user" });
     }
+  }
+  async saveModel(req, res, next) {
+    saveModel.single("model")(req, res, async (error) => {
+      if (error) {
+        return res.status(400).json({ message: err.message });
+      }
+      try {
+        if (!req.file) {
+          return res.status(400).json({ message: "No file uploaded" });
+        }
+
+        const newFilePath = path.join("public/model", req.file.filename);
+        const oldFilePath = path.join("public/model", req.file.originalname);
+        if (fs.existsSync(oldFilePath) && oldFilePath !== newFilePath) {
+          fs.unlinkSync(oldFilePath); // Delete old file
+        }
+        res.status(200).json({
+          message: "File uploaded successfully",
+          filePath: newFilePath,
+        });
+      } catch (err) {
+        res
+          .status(500)
+          .json({ message: "Error uploading file", error: err.message });
+        next(err);
+      }
+    });
   }
 }
 

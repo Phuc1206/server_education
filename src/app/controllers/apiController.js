@@ -1,9 +1,10 @@
 const Course = require("../models/Course");
 const User = require("../models/User");
 const Progress = require("../models/Progress");
-
+const mongoose = require("mongoose");
 const path = require("path");
 const { upload, deleteFile } = require("../../middlewares/UploadImgMiddleware");
+const exp = require("constants");
 class apiController {
   async home(req, res, next) {
     try {
@@ -106,6 +107,9 @@ class apiController {
     try {
       const { courseId } = req.params;
       const { userId } = req.body;
+      if (!mongoose.Types.ObjectId.isValid(userId)) {
+        return res.status(400).json({ message: "Invalid user ID" });
+      }
       const user = await User.findById(userId);
 
       if (!user) {
@@ -213,6 +217,18 @@ class apiController {
       res.status(500).json({ message: "Error getting progress", error });
       next(error);
     }
+  }
+  async getmodelClassifier(req, res) {
+    const absolutePath = path.join(
+      __dirname,
+      "..",
+      "..",
+      "..",
+      "public",
+      "model",
+      "model.json"
+    );
+    res.sendFile(absolutePath);
   }
 }
 module.exports = new apiController();
