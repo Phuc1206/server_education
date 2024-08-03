@@ -12,7 +12,7 @@ router.put("/course/track/update/:id", adminController.updateTracks);
 router.delete("/course/track/step/delete/:id", adminController.removeStep);
 router.delete("/course/track/delete/:id", adminController.removeTrack);
 // User routes
-router.get("/user/", adminController.showUser);
+router.get("/user", adminController.showUser);
 router.get("/user/blocked", adminController.showUserBlocked);
 router.delete(
   "/user/remove/:userId/:courseId",

@@ -2,6 +2,7 @@ const Course = require("../models/Course");
 const User = require("../models/User");
 const Track = require("../models/Track");
 const TrackStep = require("../models/TrackStep");
+const Progress = require("../models/Progress");
 const getYouTubeVideoDuration = require("../utils/apiYoutube");
 const { saveModel } = require("../../middlewares/SaveModelMiddleware");
 const path = require("path");
@@ -57,11 +58,12 @@ class adminController {
   async updateCourse(req, res) {
     try {
       const course = await Course.updateOne({ _id: req.params.id }, req.body);
-      if (!course.nModified) {
-        return res
-          .status(404)
-          .json({ message: "Course not found or no changes made" });
-      }
+      console.log(req.params.id);
+      // if (!course.nModified) {
+      //   return res
+      //     .status(404)
+      //     .json({ message: "Course not found or no changes made" });
+      // }
       return res.json(course);
     } catch (err) {
       res.status(500).json({
@@ -277,23 +279,47 @@ class adminController {
     const { userId, courseId } = req.params;
 
     try {
+      // Step 1: Remove course from user's course list
       const userUpdateResult = await User.updateOne(
         { _id: userId },
         { $pull: { course_id: courseId } }
       );
 
       if (userUpdateResult.modifiedCount === 1) {
+        // Step 2: Remove user from course's student list
         const courseUpdateResult = await Course.updateOne(
           { _id: courseId },
           { $pull: { students_count: userId } }
         );
 
         if (courseUpdateResult.modifiedCount === 1) {
-          res.status(200).send({
-            message:
-              "Course removed from user and user removed from course successfully.",
+          // Step 3: Remove progress records for this user and course
+          const progressRemovalResult = await Progress.deleteMany({
+            user: userId,
+            course: courseId,
           });
+
+          if (progressRemovalResult.deletedCount >= 0) {
+            res.status(200).send({
+              message:
+                "Course removed from user and user removed from course successfully.",
+            });
+          } else {
+            // Rollback user and course updates if progress removal fails
+            await User.updateOne(
+              { _id: userId },
+              { $push: { course_id: courseId } }
+            );
+            await Course.updateOne(
+              { _id: courseId },
+              { $push: { students_count: userId } }
+            );
+            res.status(500).send({
+              message: "Progress removal failed. Updates rolled back.",
+            });
+          }
         } else {
+          // Rollback user update if course update fails
           await User.updateOne(
             { _id: userId },
             { $push: { course_id: courseId } }
@@ -311,6 +337,7 @@ class adminController {
       res.status(500).send({ message: "Internal server error." });
     }
   }
+
   async blockUser(req, res) {
     try {
       const user = await User.delete({ _id: req.params.id });

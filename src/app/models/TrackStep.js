@@ -3,15 +3,15 @@ const Schema = mongoose.Schema;
 
 const TrackStep = new Schema(
   {
-    position: { type: Number, required: true },
+    position: { type: Number },
     lesson: {
-      question: { type: String, default: "" },
-      answer: { type: String, default: "" },
-      option_a: { type: String, default: "" },
-      option_b: { type: String, default: "" },
-      option_c: { type: String, default: "" },
-      option_d: { type: String, default: "" },
-      explanation: { type: String, default: "" },
+      question: { type: String },
+      answer: { type: String },
+      option_a: { type: String },
+      option_b: { type: String },
+      option_c: { type: String },
+      option_d: { type: String },
+      explanation: { type: String },
     },
     video: {
       title: { type: String, required: true },

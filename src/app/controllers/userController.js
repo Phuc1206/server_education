@@ -64,12 +64,12 @@ class userController {
         .status(200)
         .json({ message: "Logged in successfully", user, accessToken });
     } catch (error) {
-      next(error);
+      res.status(400).json({ error: error.message });
     }
   }
 
   getUser(req, res) {
-    res.json(req.user);
+    res.status(200).json(req.user);
   }
 }
 
