@@ -47,6 +47,12 @@ class adminController {
       if (!course) {
         return res.status(404).json({ message: "Course not found" });
       }
+      const tracks = await Track.find({ course_id: course._id });
+      for (const track of tracks) {
+        await TrackStep.deleteMany({ _id: { $in: track.track_steps } });
+      }
+      await Track.deleteMany({ course_id: course._id });
+      await Progress.deleteMany({ course: course._id });
       return res.json(course);
     } catch (err) {
       res.status(500).json({
@@ -58,7 +64,6 @@ class adminController {
   async updateCourse(req, res) {
     try {
       const course = await Course.updateOne({ _id: req.params.id }, req.body);
-      console.log(req.params.id);
       // if (!course.nModified) {
       //   return res
       //     .status(404)
@@ -150,7 +155,6 @@ class adminController {
     try {
       const trackId = req.params.id;
       const { title, duration, position, track_steps } = req.body;
-
       const updatedTrack = await Track.findByIdAndUpdate(
         trackId,
         {
@@ -165,28 +169,35 @@ class adminController {
         return res.status(404).json({ message: "Track not found" });
       }
 
-      // Cập nhật từng track_step trong track_steps
+      // Update each track_step in track_steps
       const updatedTrackSteps = await Promise.all(
         track_steps.map(async (step) => {
+          const updateData = {
+            video: {
+              title: step.video.title,
+              url: step.video.url,
+              image_url: step.video.image_url,
+              duration: step.video.duration,
+            },
+          };
+
+          if (step.lesson) {
+            updateData.lesson = {
+              question: step.lesson.question,
+              answer: step.lesson.answer,
+              option_a: step.lesson.option_a,
+              option_b: step.lesson.option_b,
+              option_c: step.lesson.option_c,
+              option_d: step.lesson.option_d,
+              explanation: step.lesson.explanation,
+            };
+          } else {
+            updateData.$unset = { lesson: "" };
+          }
+
           const updatedStep = await TrackStep.findByIdAndUpdate(
             step._id,
-            {
-              lesson: {
-                question: step.lesson.question,
-                answer: step.lesson.answer,
-                option_a: step.lesson.option_a,
-                option_b: step.lesson.option_b,
-                option_c: step.lesson.option_c,
-                option_d: step.lesson.option_d,
-                explanation: step.lesson.explanation,
-              },
-              video: {
-                title: step.video.title,
-                url: step.video.url,
-                image_url: step.video.image_url,
-                duration: step.video.duration,
-              },
-            },
+            updateData,
             { new: true }
           );
 
@@ -390,7 +401,11 @@ class adminController {
       if (!deletedUser) {
         return res.status(404).json({ message: "User not found" });
       }
-
+      await Course.updateMany(
+        { students_count: userId },
+        { $pull: { students_count: userId } }
+      );
+      await Progress.deleteMany({ user: userId });
       return res
         .status(200)
         .json({ message: "User deleted successfully", deletedUser });

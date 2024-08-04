@@ -11,7 +11,6 @@ const Course = new Schema(
     students_count: [{ type: Schema.Types.ObjectId, ref: "User", default: [] }],
     slug: { type: String, slug: "title", unique: true },
     duration: { type: String, required: true },
-    // is_logged: { type: Boolean, default: true },
     tracks: [
       {
         type: Schema.Types.ObjectId,
