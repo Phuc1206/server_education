@@ -210,7 +210,7 @@ class apiController {
         .populate("track")
         .populate("trackStep");
       if (progressRecords.length === 0) {
-        return res.status(404).json({ message: "No progress records found" });
+        return res.status(200).json({ message: "No progress records found" });
       }
       res.json(progressRecords);
     } catch (error) {
